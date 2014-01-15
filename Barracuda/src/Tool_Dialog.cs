@@ -12,7 +12,7 @@ namespace Barracuda
     {
 
         public const string typefilter_ALL = "All Files (*.*)|*.*";
-        public const string typefilter_UNITY = "Unity Files (*.asset, *.assets)|*.asset;*.assets";
+        public const string typefilter_UNITY = "Unity Files |*.*";
 
 
 
