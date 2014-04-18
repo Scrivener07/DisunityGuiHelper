@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Barracuda")]
-[assembly: AssemblyDescription("GUI for ata4's Disunity")]
+[assembly: AssemblyTitle("DisunityGUI")]
+[assembly: AssemblyDescription("A graphical user interface for Disunity.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Barracuda")]
+[assembly: AssemblyProduct("Disunity Gui Helper")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("8d15e533-6c5a-4926-8bb6-5f47ca253738")]
+[assembly: Guid("20513468-c9b6-4600-885d-ba28eb644c0e")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyVersion("0.0.2.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
