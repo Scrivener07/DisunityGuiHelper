@@ -11,197 +11,188 @@ using System.Diagnostics;
 using System.IO;
 
 
+
 namespace DisunityGuiHelper
 {
 	public partial class ToolWindow : Form
 	{
 
 		private ATA4 DisunityHelper;
-		private string TargetFilePath = null;
-		private string SearchClassFilter = null;
-		private int ExecuteCommandIndex = 0;
-
+		private bool UseExpert = false;
+		private bool UseVerbose = false;
+		private bool UseTarget = true;
+		private bool UseScrollToEnd = true;
+		private bool UseHighlightLine = false;
+		private int RunPresetInput = 0;
+		private string RunExpertInput = null;
+		private string ProcessTarget = null;
+		private string ProcessFilter = null;
 
 
 		public ToolWindow()
 		{
 			InitializeComponent();
 			DisunityHelper = new ATA4();
-			SetupCommandSelection();
-			SetupBrowseTarget();
-			this.WriteOutput("To get started, choose a file with the target button or drag and drop a file onto the drop zone.\n" +
-				"Configure the file process by selecting a command from the drop down menu. Click execute when ready.\n" + 
-				"You may also save to file or clear this output windows content at any time."
-				);
+			Setup();
+			WriteWelcome();
+		}
+
+
+		private void Setup()
+		{
+			SetupOutput();
+			SetupOptions();
+			SetupPresetSelection();
+			SetCommandMode(UseExpert);
+		}
+
+
+		private void SetupOptions()
+		{
+			this.TargetTextBox.Text = "Select a file or directory to process.";
+			this.ToggleUseExpert.Checked = UseExpert;
+			this.ToggleUseTarget.Checked = UseTarget;
+			this.ToggleUseVerbose.Checked = UseVerbose;
+			this.ToggleUseScrollToEnd.Checked = UseScrollToEnd;
+			this.ToggleUseLineHightlight.Checked = UseHighlightLine;
 		}
 
 
 
-		// Browse Target
-		///-----------------------------------------------------------------------------------
-		private void SetupBrowseTarget()
+		private void SetCommandMode(bool isExpert)
 		{
-			BrowseTargetTextBox.Text = "Select a unity file to process.";
-		}
-
-
-
-		private void BrowseTargetButton_OnClick(object sender, EventArgs e)
-		{
-			ShowFileBrowser(typefilter_UNITY);
-			SetTargetPath(BrowseFileDialog.FileName);
-		}
-
-
-
-		private void DropZonePanel_OnDragEnter(object sender, DragEventArgs e)
-		{
-			if (e.Data.GetDataPresent(DataFormats.FileDrop))
+			if (isExpert)
 			{
-				e.Effect = DragDropEffects.All;
-			}
-			else 
-			{
-				e.Effect = DragDropEffects.None;
-			}
-		}
-
-
-
-		private void DropZonePanel_OnDragDrop(object sender, DragEventArgs e)
-		{
-			string[] dzPath = (string[])e.Data.GetData(DataFormats.FileDrop, false);
-
-			for (int i = 0; i < dzPath.Length; i++)
-			{
-				SetTargetPath(dzPath[i]);
-			}
-		}
-
-
-		private void SetTargetPath(string evalPath)
-		{
-			if (File.Exists(evalPath))
-			{
-				TargetFilePath = evalPath;
-				BrowseTargetTextBox.Text = evalPath;
-				WriteOutput("Pending File: " + evalPath);
+				this.ToggleUseTarget.Enabled = true;
+				this.ToggleUseVerbose.Enabled = false;
+				this.RunExpertSelection.Enabled = true;
+				this.RunExpertSelection.Visible = true;
+				this.RunPresetSelection.Enabled = false;
+				this.RunPresetSelection.Visible = false;
+				this.RunExpertSelection.Dock = DockStyle.Fill;
+				this.FilterTextBox.Enabled = false;
+				this.FilterTextBox.Visible = false;
+				this.WriteOutput("Expert Mode: Visit https://github.com/ata4/disunity for additional command usage information.");
+				EnableSupport(false);
 			}
 			else
 			{
-				TargetFilePath = null;
-				BrowseTargetTextBox.Text = "Select a unity file to process.";
-				WriteOutput("File" + evalPath + " does not exist.");
+				UseTarget = true; 
+				this.ToggleUseTarget.Enabled = false; 
+				this.ToggleUseTarget.Checked = UseTarget;
+				this.ToggleUseVerbose.Enabled = true;
+				this.RunExpertSelection.Enabled = false;
+				this.RunExpertSelection.Visible = false;
+				this.RunExpertSelection.Dock = DockStyle.None;
+				this.RunPresetSelection.Enabled = true;
+				this.RunPresetSelection.Visible = true;
+				UpdateFilter();
 			}
+
+			UpdateHint();
+			this.WriteInfo();
 		}
 
 
 
-		// Command Selection
+
+		// Toggles and Options
 		///-----------------------------------------------------------------------------------
-
-		private void SetupCommandSelection()
+		private void ToggleUseExpert_OnCheckedChanged(object sender, EventArgs e)
 		{
-			foreach (string item in DisunityHelper.CommandList)
-			{
-				CommandSelectionCombo.Items.Add(item);
-			}
-			CommandSelectionCombo.SelectedIndex = 0;
-
-			UpdateCommandHint();
+			UseExpert = this.ToggleUseExpert.Checked;
+			SetCommandMode(UseExpert);
 		}
 
 
-		private void CommandSelectionCombo_OnSelectionChangeCommitted(object sender, EventArgs e)
+		private void ToggleUseVerbose_OnCheckedChanged(object sender, EventArgs e)
 		{
-			ExecuteCommandIndex = CommandSelectionCombo.SelectedIndex;
-			WriteOutput("Pending Command: " + ExecuteCommandIndex);
-
-			if (ExecuteCommandIndex == ATA4.IDExtract)
-			{
-				ClassFilterTextBox.Enabled = true;
-				ClassFilterTextBox.Text = "";
-			}
-			else
-			{
-				ClassFilterTextBox.Enabled = false;
-				ClassFilterTextBox.Text = null;
-			}
-			UpdateCommandHint();
+			UseVerbose = this.ToggleUseVerbose.Checked;
 		}
 
 
-		private void UpdateCommandHint()
+		private void ToggleUseTarget_OnCheckedChanged(object sender, EventArgs e)
 		{
-			CommandSelectionHintText.Text = DisunityHelper.CommandHintList[CommandSelectionCombo.SelectedIndex];
+			UseTarget = this.ToggleUseTarget.Checked;
+			if (!UseTarget)
+			{
+				SetTargetPath(null);
+			}
+		}
+
+
+		private void ToggleUseScrollToEnd_OnCheckedChanged(object sender, EventArgs e)
+		{
+			UseScrollToEnd = this.ToggleUseScrollToEnd.Checked;
 		}
 
 
 
-
-
-		// Class Filter
+		// Selection
 		///-----------------------------------------------------------------------------------
-		private void ClassFilterTextBox_OnTextChanged(object sender, EventArgs e)
+		private void RunExpertSelection_OnTextChanged(object sender, EventArgs e)
 		{
-			SearchClassFilter = ClassFilterTextBox.Text;
-			this.WriteOutput(SearchClassFilter);
+			RunExpertInput = this.RunExpertSelection.Text;
 		}
 
 
 
 		// Execute
 		///-----------------------------------------------------------------------------------
-
 		private void ExecuteButton_OnClick(object sender, EventArgs e)
 		{
-			SetBusyLight();
+			Execute();
+		}
 
-			if (!String.IsNullOrEmpty(SearchClassFilter))
+
+		private void RunExpertSelection_OnKeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (e.KeyChar == (char)13)
 			{
-				this.WriteOutput(DisunityHelper.RequestCommand(TargetFilePath, ExecuteCommandIndex, SearchClassFilter));
+				Execute();
+			}
+		}
+
+
+		private void FilterTextBox_OnKeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (e.KeyChar == (char)13)
+			{
+				Execute();
+			}
+		}
+
+
+
+		private void Execute()
+		{
+			if (IsBusy) //TODO: isBusy/return does not block multiple execution. Must fix before batching.
+			{
+				return;
 			}
 			else
 			{
-				this.WriteOutput(DisunityHelper.RequestCommand(TargetFilePath, ExecuteCommandIndex));
+				SetBusyLight();
+				string result;
+				if (UseExpert)
+				{
+					if (UseTarget)
+					{
+						result = DisunityHelper.RequestCommand(RunExpertInput, ProcessTarget);
+					}
+					else
+					{
+						result = DisunityHelper.RequestCommand(RunExpertInput, null);
+					}
+				}
+				else
+				{
+					result = DisunityHelper.RequestPreset(UseVerbose, RunPresetInput, ProcessTarget, ProcessFilter);
+				}
+				this.WriteOutput(result);
+				SetReadyLight();
 			}
-			SetReadyLight();
 		}
-
-
-
-		// Application Status
-		///-----------------------------------------------------------------------------------
-
-		public void SetBusyLight()
-		{
-			this.BusyIndicator.BackColor = Color.IndianRed;
-			this.BusyStatusLabel.Text = "Busy";
-			this.CommandSelectionHintText.Text = "The application is busy processing your command..\nPlease dont try to interact with or exit this application until it is ready.".Replace("\n", Environment.NewLine);
-			this.BusyIndicator.Refresh();
-			this.BusyStatusLabel.Refresh();
-			this.CommandSelectionHintText.Refresh();
-		}
-
-
-
-		public void SetReadyLight()
-		{
-			this.BusyIndicator.BackColor = Color.MediumSeaGreen;
-			this.BusyStatusLabel.Text = "Ready";
-			this.BusyIndicator.Refresh();
-			this.BusyStatusLabel.Refresh();
-			UpdateCommandHint();
-		}
-
-
-
-
-
-
-
-
-
 
 
 
